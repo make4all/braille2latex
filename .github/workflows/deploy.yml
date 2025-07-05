@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: 'main'
+    branches: ['main']
 
 jobs:
   build_site:
@@ -29,8 +29,8 @@ jobs:
       - name: build
         env:
           BASE_PATH: '/${{ github.event.repository.name }}'
-          run: |
-            pnpm run build
+        run: |
+          pnpm run build
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
