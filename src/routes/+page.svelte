@@ -79,42 +79,66 @@
 	const authorizedExtensions = ['.brf', '.blf'];
 
 	function downloadText() {
-			const blob = new Blob([latex], { type: 'text/plain' });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = 'braille.tex'; // Set your desired filename
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-			URL.revokeObjectURL(url);
+		const blob = new Blob([latex], { type: 'text/plain' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'braille.tex'; // Set your desired filename
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
 	}
 </script>
 
 <!-- Styling is done with https://tailwindcss.com/, add a css class with whatever style you want -->
-<div class="flex justify-center pt-10 dark:bg-gray-900">
-	<div class="h-screen">
+<div class="flex flex-row justify-center pt-10 dark:bg-gray-900">
+	<div class="h-screen flex-initial w-300 m-7">
 		<div
-			class="p-7 w-xl border border-gray-100 rounded-lg shadow-lg dark:border-gray-700 dark:bg-gray-800"
+			class="p-7 border border-gray-100 rounded-lg shadow-lg dark:border-gray-700 dark:bg-gray-800"
 		>
 			<h3 class="text-3xl dark:text-gray-100">File Upload</h3>
-			<label id="braille-file-label" for="braille-file">Upload a BRF file:</label>
 
+			<label
+				id="braille-file-label"
+				for="braille-file"
+				class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Upload file</label
+			>
 			<input
 				accept={authorizedExtensions.join(',')}
-				onchange={(event) => {text = handleFileChange(event)}}
+				onchange={(event) => {
+					handleFileChange(event, (result) => {text = result});
+				}}
 				id="braille-file"
 				name="braille-file"
 				type="file"
 				aria-labelledby="braille-file-label"
+				
+				class="block w-96 text-sm bg-gray-50 file:cursor-pointer cursor-pointer rounded-lg border border-gray-300 file:py-2 file:px-4 file:mr-4 file:bg-gray-800 file:hover:bg-gray-700 file:text-white"
 			/>
+			<p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">
+				BRF or BRL. See syntax requirements <a
+					href="https://github.com/make4all/braille2latex"
+					class="font-medium text-blue-600 underline dark:text-blue-500 hover:no-underline">here</a
+				>
+			</p>
+			<br class="my-3" />
+			<h3 class="text-3xl dark:text-gray-100 mb-2">Input</h3>
+			<p
+				id="braile-text"
+				class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5 whitespace-pre-line max-h-96 overflow-y-auto"
+			>
+				{text}
+			</p>
+			<br class="my-3" />
+			<h3 class="text-3xl pt-3 dark:text-gray-100 mb-2">Output</h3>
+			<p
+				class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5 whitespace-pre-line max-h-96 overflow-y-auto"
+			>
+				{latex}
+			</p>
 
-			<h3 class="text-3xl dark:text-gray-100">Input</h3>
-			<p id="braile-text">{text}</p>
-			<br />
-			<h3 class="text-3xl pt-3 dark:text-gray-100">Output</h3>
-			<p class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5">{latex}</p>
-
+			<br class="my-3" />
 			<h3 class="text-3xl dark:text-gray-100">File Download</h3>
 			<label id="latex-download-label" for="latex-download">Download a Latex file:</label>
 
