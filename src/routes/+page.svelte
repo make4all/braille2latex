@@ -1,147 +1,105 @@
 <script>
 	import Abraham from '$lib/abraham.min.js';
+	import * as ohm from 'ohm-js';
+	import grammarFile from '$lib/grammar.ohm?raw';
+	import text from '$lib/Sample Quiz.brf?raw';
+	import operations from '$lib/operations.json?raw';
+	import ascii2Braille from '$lib/brailleMap';
 
-	let text = $state('⠑⠰⠋⠘⠭⠘⠘⠆');
-	let result = $derived(Abraham.nemethToLatex(text));
+	console.log(grammarFile);
+	console.log(text);
+	console.log(operations);
+	const grammar = ohm.grammar(grammarFile);
+
+	const s = grammar.createSemantics();
+	s.addOperation('eval', {
+		Braille(_spaces, paragraphs, _newlines) {
+			console.log('Braille: eval paragraphs');
+			return paragraphs.children.map((paragraph) => paragraph.eval()).join('\n\n');
+		},
+
+		InlineNemeth(_open, nemeth, _close) {
+			console.log('InlineNemeth: eval text');
+			let latex = Abraham.nemethToLatex(ascii2Braille(nemeth.eval())).value;
+			console.log(latex);
+			return '$' + latex + '$';
+		},
+
+		Equation(nemeth) {
+			console.log('Equation: eval nemeth');
+			return '$' + nemeth.eval() + '$';
+		},
+
+		EndLine(_) {
+			console.log('EndLine');
+			return '\n';
+		},
+
+		EndParagraph(_line, _space, _line2, _spaces) {
+			console.log('EndParagraph');
+			return '\n\n';
+		},
+
+		Text(txt) {
+			console.log('Text');
+			let latex = txt.sourceString;
+			console.log(latex);
+			return latex;
+		},
+
+		Paragraph(items1, items2) {
+			console.log('Paragraph: eval children');
+			let contents = items1.children.map((item1, i) => item1.eval() + items2.children[i].eval());
+			console.log('paragraph: items1');
+			console.log(items1.children.map((item1) => item1.eval()));
+			console.log('paragraph: items2');
+			console.log(items2.children.map((item2) => item2.eval()));
+			console.log("paragraph: end")
+
+			return contents.join(' ');
+		},
+
+		_iter(...children) {
+			console.log('iter: eval children');
+			return children.map((c) => c.eval());
+		}
+	});
+
+	//let result = $derived.by(() => {
+	let result = '';
+	const matchResult = grammar.match(text + '\n\n');
+	console.log(matchResult.toString());
+	console.log(matchResult.message);
+	const adapter = s(matchResult);
+	console.log(adapter.eval());
+	//});
+
+	const grammarExtension = ['.ohm'];
 	const authorizedExtensions = ['.brf', '.blf'];
 
-	const mapping = {
-		'\n':'\n',
-		' ': '⠀',
-		'!': '⠮',
-		'"': '⠐',
-		'#': '⠼',
-		$: '⠫',
-		'%': '⠩',
-		'&': '⠯',
-		'': '⠄',
-		'(': '⠷',
-		')': '⠾',
-		'*': '⠡',
-		'+': '⠬',
-		',': '⠠',
-		'-': '⠤',
-		'.': '⠨',
-		'/': '⠌',
-		'0': '⠴',
-		'1': '⠂',
-		'2': '⠆',
-		'3': '⠒',
-		'4': '⠲',
-		'5': '⠢',
-		'6': '⠖',
-		'7': '⠶',
-		'8': '⠦',
-		'9': '⠔',
-		':': '⠱',
-		';': '⠰',
-		'<': '⠣',
-		'=': '⠿',
-		'>': '⠜',
-		'?': '⠹',
-		'@': '⠈',
-		a: '⠁',
-		b: '⠃',
-		c: '⠉',
-		d: '⠙',
-		e: '⠑',
-		f: '⠋',
-		g: '⠛',
-		h: '⠓',
-		i: '⠊',
-		j: '⠚',
-		k: '⠅',
-		l: '⠇',
-		m: '⠍',
-		n: '⠝',
-		o: '⠕',
-		p: '⠏',
-		q: '⠟',
-		r: '⠗',
-		s: '⠎',
-		t: '⠞',
-		u: '⠥',
-		v: '⠧',
-		w: '⠺',
-		x: '⠭',
-		y: '⠽',
-		z: '⠵',
-		A: '⠁',
-		B: '⠃',
-		C: '⠉',
-		D: '⠙',
-		E: '⠑',
-		F: '⠋',
-		G: '⠛',
-		H: '⠓',
-		I: '⠊',
-		J: '⠚',
-		K: '⠅',
-		L: '⠇',
-		M: '⠍',
-		N: '⠝',
-		O: '⠕',
-		P: '⠏',
-		Q: '⠟',
-		R: '⠗',
-		S: '⠎',
-		T: '⠞',
-		U: '⠥',
-		V: '⠧',
-		W: '⠺',
-		X: '⠭',
-		Y: '⠽',
-		Z: '⠵',
-		'[': '⠪',
-		'\\': '⠳',
-		']': '⠻',
-		'^': '⠘',
-		_: '⠸'
-	};
-
-	function convertString(input_str) {
-		let out = [];
-		for (const input_char of input_str) {
-				out += mapping[input_char] || '';
-		}
-		return out;
-	}
-
 	function handleFileChange(event) {
-		const input = event.target;
-		const file = input?.files?.[0];
-		if (file) {
-			const reader = new FileReader();
-			reader.onload = () => {
-				text = convertString(reader.result);
-			};
-			reader.readAsText(file);
-		}
+		// 	const input = event.target;
+		// 	const file = input?.files?.[0];
+		// 	if (file) {
+		// 		const reader = new FileReader();
+		// 		reader.onload = () => {
+		// 			text = reader.result;
+		// 		};
+		// 		reader.readAsText(file);
+		// 	}
 	}
 
 	function downloadText() {
-		let latex = []
-		let current = '';
-		for (const input_char of text) {
-			if (input_char == '\n') {
-				console.log(current)
-				latex += Abraham.nemethToLatex(current);
-				current = '';
-			} else {
-				current += input_char;
-			}
-		}	
-		const blob = new Blob(latex, { type: 'text/plain' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = 'braille.tex'; // Set your desired filename
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-		URL.revokeObjectURL(url);
+		// 	const blob = new Blob(latex, { type: 'text/plain' });
+		// 	const url = URL.createObjectURL(blob);
+		// 	const a = document.createElement('a');
+		// 	a.href = url;
+		// 	a.download = 'braille.tex'; // Set your desired filename
+		// 	document.body.appendChild(a);
+		// 	a.click();
+		// 	document.body.removeChild(a);
+		// 	URL.revokeObjectURL(url);
 	}
-
 </script>
 
 <!-- Styling is done with https://tailwindcss.com/, add a css class with whatever style you want -->
@@ -166,8 +124,7 @@
 			<p id="braile-text">{text}</p>
 			<br />
 			<h3 class="text-3xl pt-3 dark:text-gray-100">Output</h3>
-			<p class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5">{result.value}</p>
-			<p class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5">{result.isError}</p>
+			<p class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5">{result}</p>
 
 			<h3 class="text-3xl dark:text-gray-100">File Download</h3>
 			<label id="latex-download-label" for="latex-download">Download a Latex file:</label>

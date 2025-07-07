@@ -40,5 +40,8 @@
 		"ignoredBuiltDependencies": [
 			"@tailwindcss/oxide"
 		]
+	},
+	"dependencies": {
+		"ohm-js": "^17.1.0"
 	}
 }
