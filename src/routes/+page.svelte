@@ -92,64 +92,72 @@
 </script>
 
 <!-- Styling is done with https://tailwindcss.com/, add a css class with whatever style you want -->
-<div class="flex flex-row justify-center pt-10 dark:bg-gray-900">
-	<div class="h-screen flex-initial w-300 m-7">
+<div class="flex flex-row justify-center dark:bg-gray-900">
+	<div class="h-screen flex-initial w-300 m-5">
 		<div
-			class="p-7 border border-gray-100 rounded-lg shadow-lg dark:border-gray-700 dark:bg-gray-800"
+			class="p-3 border border-gray-100 rounded-lg shadow-lg dark:border-gray-700 dark:bg-gray-800"
 		>
-			<h3 class="text-3xl dark:text-gray-100">File Upload</h3>
+			<div class="pb-4 px-4">
+				<h3 class="text-3xl dark:text-gray-100">File Upload</h3>
 
-			<label
-				id="braille-file-label"
-				for="braille-file"
-				class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Upload file</label
-			>
-			<input
-				accept={authorizedExtensions.join(',')}
-				onchange={(event) => {
-					handleFileChange(event, (result) => {text = result});
-				}}
-				id="braille-file"
-				name="braille-file"
-				type="file"
-				aria-labelledby="braille-file-label"
-				
-				class="block w-96 text-sm bg-gray-50 file:cursor-pointer cursor-pointer rounded-lg border border-gray-300 file:py-2 file:px-4 file:mr-4 file:bg-gray-800 file:hover:bg-gray-700 file:text-white"
-			/>
-			<p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">
-				BRF or BRL. See syntax requirements <a
-					href="https://github.com/make4all/braille2latex"
-					class="font-medium text-blue-600 underline dark:text-blue-500 hover:no-underline">here</a
+				<label
+					id="braille-file-label"
+					for="braille-file"
+					class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Upload file</label
 				>
-			</p>
-			<br class="my-3" />
-			<h3 class="text-3xl dark:text-gray-100 mb-2">Input</h3>
-			<p
-				id="braile-text"
-				class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5 whitespace-pre-line max-h-96 overflow-y-auto"
-			>
-				{text}
-			</p>
-			<br class="my-3" />
-			<h3 class="text-3xl pt-3 dark:text-gray-100 mb-2">Output</h3>
-			<p
-				class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5 whitespace-pre-line max-h-96 overflow-y-auto"
-			>
-				{latex}
-			</p>
+				<input
+					accept={authorizedExtensions.join(',')}
+					onchange={(event) => {
+						handleFileChange(event, (result) => {
+							text = result;
+						});
+					}}
+					id="braille-file"
+					name="braille-file"
+					type="file"
+					aria-labelledby="braille-file-label"
+					class="block w-96 text-sm bg-gray-50 file:cursor-pointer cursor-pointer rounded-lg border border-gray-300 file:py-2 file:px-4 file:mr-4 file:bg-gray-800 file:hover:bg-gray-700 file:text-white"
+				/>
+				<p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">
+					BRF or BRL. See syntax requirements <a
+						href="https://github.com/make4all/braille2latex"
+						class="font-medium text-blue-600 underline dark:text-blue-500 hover:no-underline"
+						>here</a
+					>
+				</p>
+			</div>
+			<div class="flex flex-col lg:flex-row">
+				<div class="p-4 flex-auto">
+					<h3 class="text-3xl dark:text-gray-100 mb-2">Input</h3>
+					<p
+						id="braile-text"
+						class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5 whitespace-pre-line max-h-96 overflow-y-auto"
+					>
+						{text}
+					</p>
+				</div>
+				<div class="p-4 flex-auto">
+					<h3 class="text-3xl dark:text-gray-100 mb-2">Output</h3>
+					<p
+						class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5 whitespace-pre-line max-h-96 overflow-y-auto"
+					>
+						{latex}
+					</p>
+				</div>
+			</div>
+			<div class="p-4">
+				<h3 class="text-3xl dark:text-gray-100">File Download</h3>
+				<label id="latex-download-label" for="latex-download">Download a Latex file:</label>
 
-			<br class="my-3" />
-			<h3 class="text-3xl dark:text-gray-100">File Download</h3>
-			<label id="latex-download-label" for="latex-download">Download a Latex file:</label>
-
-			<button
-				id="latex-download"
-				name="latex-download"
-				class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-				onclick={downloadText}
-			>
-				Download Input as File
-			</button>
+				<button
+					id="latex-download"
+					name="latex-download"
+					class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+					onclick={downloadText}
+				>
+					Download Input as File
+				</button>
+			</div>
 		</div>
 	</div>
 </div>
