@@ -4,7 +4,7 @@
 	import grammarFile from '$lib/grammar.ohm?raw';
 	import text from '$lib/Sample Quiz.brf?raw';
 	import operations from '$lib/operations.json?raw';
-	import ascii2Braille from '$lib/brailleMap';
+	import {ascii2Braille, NEWLINESYM} from '$lib/brailleMap';
 
 	console.log(grammarFile);
 	console.log(text);
@@ -67,11 +67,11 @@
 
 	//let result = $derived.by(() => {
 	let result = '';
-	const matchResult = grammar.match(text + '\n\n');
+	const matchResult = grammar.match(text.replaceAll('\r',"").replaceAll('\n', NEWLINESYM) + NEWLINESYM+NEWLINESYM);
 	console.log(matchResult.toString());
 	console.log(matchResult.message);
 	const adapter = s(matchResult);
-	console.log(adapter.eval());
+	console.log(adapter.eval().replaceAll(NEWLINESYM, '\n')); 
 	//});
 
 	const grammarExtension = ['.ohm'];
