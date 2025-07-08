@@ -1,23 +1,16 @@
 <script>
-
 	import sample from '$lib/Sample Quiz.brf?raw';
 	import { NEWLINESYM } from '$lib/brailleMap';
 	import { handleFileChange, downloadText } from '$lib/helper.js';
-	import { semantics, grammar } from '$lib/processFile.js';
+	import { parse } from '$lib/processFile.js';
 
 	let text = $state(sample);
 	let filename = $state("example_filename.tex");
 
 	let latex = $derived.by(() => {
-		const matchResult = grammar.match(
-			text.replaceAll('\r', '').replaceAll('\n', NEWLINESYM) + NEWLINESYM + NEWLINESYM
-		);
-		console.debug(matchResult.toString());
-		console.debug(matchResult.message);
-		const adapter = semantics(matchResult);
-		const evalstring = adapter.eval().replaceAll(NEWLINESYM, '\n');
-		console.debug(evalstring);
-		return evalstring;
+		let latex = parse(text);
+		console.log(latex);
+		return latex;
 	});
 
 	const authorizedExtensions = ['.brf', '.blf'];

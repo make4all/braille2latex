@@ -1,0 +1,22 @@
+/**
+  * Grammar for Braille text processing.
+  * This grammar defines the structure of Braille text, specifically 
+  * handling paragraphs (delimited be two or more newlines) and 
+  * Nemeth math (which is delimited by "_%" to start and "_:" to stop).
+  * If Nemeth math has two newlines on either side, it is treated as an
+  * equation in Latex, otherwise it is treated as inline math.
+  */
+
+GrammarBraille {
+  Braille = Block+ 
+  Block = Blank | Paragraph | Equation | End 
+  Paragraph = Line+
+  Equation = NemethStart (~EndLine ~NemethStart ~NemethEnd any)+ NemethEnd EndLine
+  NemethStart = "_%"
+  NemethEnd = "_:"
+  Space = " " 
+  Blank = Space* EndLine
+  EndLine = ("\\n" | "\\r\\n" | "\\r") // End of line can be \n, \r\n, or \r
+  Line = (~EndLine any)+ EndLine // Line has at least one letter
+  End = (~EndLine any)+ end
+}

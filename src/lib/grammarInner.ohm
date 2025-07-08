@@ -1,0 +1,14 @@
+
+MarkdownInner {
+  InlineNemeth = NemethStart (~NemethStart ~NemethEnd any)* NemethEnd
+  BoldSymbol = "_*"
+  ItalicSymbol = "_."
+  NemethStart = "_%"
+  NemethEnd = "_:"
+  Block = Paragraph*
+  Paragraph = InlineNemeth | Bold | Italic |  Plain
+  Plain = ( ~( BoldSymbol | ItalicSymbol | NemethStart | NemethEnd ) any)+
+  Bold = BoldSymbol (~BoldSymbol ~NemethStart ~NemethEnd any)* BoldSymbol
+  Italic = ItalicSymbol (~ItalicSymbol ~NemethStart ~NemethEnd any)* ItalicSymbol
+}
+  
