@@ -6,7 +6,7 @@
 	import { semantics, grammar } from '$lib/processFile.js';
 
 	let text = $state(sample);
-	let filename = $state("example_filename");
+	let filename = $state("example_filename.tex");
 
 	let latex = $derived.by(() => {
 		const matchResult = grammar.match(
