@@ -1,68 +1,12 @@
 <script>
-	import Abraham from '$lib/abraham.min.js';
-	import * as ohm from 'ohm-js';
-	import grammarFile from '$lib/grammar.ohm?raw';
+
 	import sample from '$lib/Sample Quiz.brf?raw';
-	import { ascii2Braille, NEWLINESYM } from '$lib/brailleMap';
-	import { handleFileChange } from '$lib/helper.js';
-
-	const grammar = ohm.grammar(grammarFile);
-
-	const s = grammar.createSemantics();
-	s.addOperation('eval', {
-		Braille(_spaces, paragraphs, _newlines) {
-			console.debug('Braille: eval paragraphs');
-			return paragraphs.children.map((paragraph) => paragraph.eval()).join('\n\n');
-		},
-
-		InlineNemeth(_open, nemeth, _close) {
-			console.debug('InlineNemeth: eval text');
-			let latex = Abraham.nemethToLatex(ascii2Braille(nemeth.eval())).value;
-			console.debug(latex);
-			return '$' + latex + '$';
-		},
-
-		Equation(nemeth) {
-			console.debug('Equation: eval nemeth');
-			return '$' + nemeth.eval() + '$';
-		},
-
-		EndLine(_) {
-			console.debug('EndLine');
-			return '\n';
-		},
-
-		EndParagraph(_line, _space, _line2, _spaces) {
-			console.debug('EndParagraph');
-			return '\n\n';
-		},
-
-		Text(txt) {
-			console.debug('Text');
-			let latex = txt.sourceString;
-			console.debug(latex);
-			return latex;
-		},
-
-		Paragraph(items1, items2) {
-			console.debug('Paragraph: eval children');
-			let contents = items1.children.map((item1, i) => item1.eval() + items2.children[i].eval());
-			console.debug('paragraph: items1');
-			console.debug(items1.children.map((item1) => item1.eval()));
-			console.debug('paragraph: items2');
-			console.debug(items2.children.map((item2) => item2.eval()));
-			console.debug('paragraph: end');
-
-			return contents.join(' ');
-		},
-
-		_iter(...children) {
-			console.debug('iter: eval children');
-			return children.map((c) => c.eval());
-		}
-	});
+	import { NEWLINESYM } from '$lib/brailleMap';
+	import { handleFileChange, downloadText } from '$lib/helper.js';
+	import { semantics, grammar } from '$lib/processFile.js';
 
 	let text = $state(sample);
+	let filename = $state("example_filename");
 
 	let latex = $derived.by(() => {
 		const matchResult = grammar.match(
@@ -70,25 +14,13 @@
 		);
 		console.debug(matchResult.toString());
 		console.debug(matchResult.message);
-		const adapter = s(matchResult);
+		const adapter = semantics(matchResult);
 		const evalstring = adapter.eval().replaceAll(NEWLINESYM, '\n');
 		console.debug(evalstring);
 		return evalstring;
 	});
 
 	const authorizedExtensions = ['.brf', '.blf'];
-
-	function downloadText() {
-		const blob = new Blob([latex], { type: 'text/plain' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = 'braille.tex'; // Set your desired filename
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-		URL.revokeObjectURL(url);
-	}
 </script>
 
 <!-- Styling is done with https://tailwindcss.com/, add a css class with whatever style you want -->
@@ -108,15 +40,16 @@
 				<input
 					accept={authorizedExtensions.join(',')}
 					onchange={(event) => {
-						handleFileChange(event, (result) => {
+						handleFileChange(event, (result, fname) => {
 							text = result;
+							filename = fname.split('.').slice(0,-1).join('.') + '.tex'
 						});
 					}}
 					id="braille-file"
 					name="braille-file"
 					type="file"
 					aria-labelledby="braille-file-label"
-					class="block w-96 text-sm bg-gray-50 file:cursor-pointer cursor-pointer rounded-lg border border-gray-300 file:py-2 file:px-4 file:mr-4 file:bg-gray-800 file:hover:bg-gray-700 file:text-white"
+					class="block w-96 text-sm bg-gray-50 dark:bg-gray-950 dark:text-gray-100 file:cursor-pointer cursor-pointer rounded-lg border border-gray-300 dark:border-gray-700 file:py-2 file:px-4 file:mr-4 file:bg-gray-800 dark:file:bg-gray-600 file:hover:bg-gray-700 file:text-white font-light file:font-normal"
 				/>
 				<p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">
 					BRF or BRL. See syntax requirements <a
@@ -147,13 +80,15 @@
 			</div>
 			<div class="p-4">
 				<h3 class="text-3xl dark:text-gray-100">File Download</h3>
-				<label id="latex-download-label" for="latex-download">Download a Latex file:</label>
+				<label id="latex-download-label" for="latex-download" class="dark:text-gray-100"
+					>Download a Latex file:</label
+				>
 
 				<button
 					id="latex-download"
 					name="latex-download"
-					class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-					onclick={downloadText}
+					class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-800 dark:hover:bg-blue-900"
+					onclick={() => {downloadText(latex, filename)}}
 				>
 					Download Input as File
 				</button>
