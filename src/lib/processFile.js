@@ -48,30 +48,30 @@ export function parse_blocks(text) {
 	  * the LaTeX representation of the original text.
 	  */
 	parser.semantics.addOperation('eval', {
-		Braille: (a) => {
-			console.log("eval:braille" + typeof(a));
-			return a.children.map(c => c.eval());
+		Braille: (text) => {
+			let res = text.children.map(c => c.eval()).join("");
+			console.log("eval:braille: " + res);
+			return res;
 		},
 		Block: (block) => {
-			console.log("eval:block" );
-			return block.eval();
-		},
-		Blank: (a, b) => {
-			console.log("eval:blank");
-			return "\n";
+			let res = block.eval();
+			console.log("eval:block: " + res);
+			return res;
 		},
 		Paragraph(children) {
-			console.log("eval:paragraph");
-			return children.children.map(c => c.eval()).join("");
+			let res = children.children.map(c => c.eval()).join("");
+			console.log("eval:paragraph: " + res);
+			return res
 		},
 		Equation: (eqn) => {
-			console.log("eval:equation");
-			return "$" + eqn.eval() + "$";
+			let res = "$" + eqn.eval() + "$"
+			console.log("eval:equation: " + string);
+			return res;
 		},
 		InlineNemeth(_1, a, _2) {
-			console.log("eval:inline_nemeth");
 			const latex = Abraham.nemethToLatex(ascii2Braille(a.sourceString))
 			if (latex.isError) throw new Error("Invalid Nemeth");
+			console.log("eval:inline_nemeth: $" + latex.value + "$");
 			return "$" + latex.value + "$";
 		},
 		InlineNemethL(nemeth, plain) {
@@ -80,19 +80,29 @@ export function parse_blocks(text) {
 		InlineNemethR(plain, nemeth) {
 			return plain.eval() + nemeth.eval();
 		},
-		TextBlock(blocks) {
-			console.log("eval:textblock");
-			return blocks.children.map(c => c.eval()).join("");
-		},
+
 		Plain(text) {
-			console.log("eval:plain");
+			console.log("eval:plain: " + text.sourceString);
 			return text.sourceString
+		},
+		Blank: (a, b) => {
+			console.log("eval:blank");
+			return "\n";
+		},
+		EndLine(_) {
+			console.log("eval:endline");
+			return "\n";
+		},
+		TextBlock(blocks) {
+			let res = blocks.children.map(c => c.eval()).join("\\n");
+			console.log("eval:textblock: " + res);
+			return res;
 		},
 		End(_, a) {
 			return "";
 		},
 		_iter(...children) {
-			return children.map(c => c.eval());
+			return children.map(c => c.eval()).join("");
 		}
 	});
 
