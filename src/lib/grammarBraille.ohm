@@ -10,11 +10,15 @@
 GrammarBraille {
   Braille = Block+ 
   Block = Blank | Paragraph | Equation | End 
-  Paragraph = Line+
+  Paragraph = Line (Line | InlineNemeth | Bold | Italic)* 
   Equation = NemethStart (~EndLine ~NemethStart ~NemethEnd any)+ NemethEnd EndLine
   NemethStart = "_%"
   NemethEnd = "_:"
-  InlineNemeth = NemethStart (~NemethStart ~NemethEnd ~Equation any)* NemethEnd
+  BoldSymbol = "_*"
+  ItalicSymbol = "_."
+  InlineNemeth = NemethStart (~Paragraph ~NemethStart ~NemethEnd ~Equation any)* NemethEnd
+  Bold = BoldSymbol (~Paragraph ~BoldSymbol ~NemethStart ~NemethEnd any)* BoldSymbol
+  Italic = ItalicSymbol (~Paragraph ~ItalicSymbol ~NemethStart ~NemethEnd any)* ItalicSymbol
   Space = " " 
   BoldSymbol = "_*"
   ItalicSymbol = "_."
