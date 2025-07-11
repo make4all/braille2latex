@@ -44,53 +44,47 @@ export function parse_blocks(text) {
 	  * us to walk through the syntax tree and produce a new string, which is 
 	  * the LaTeX representation of the original text.
 	  */
-	parser.semantics.addOperation('blocks', {
+	parser.semantics.addOperation('eval', {
 		_terminal() {
 			console.log("terminal: " + this.toString());
-			return [this.sourceString];
+			return this.sourceString;
+		},
+		Braille: (a) => {
+			console.log("eval:braille" + typeof(a));
+			return  a.children.map(c => c.eval()).join("");
+		},
+		Block: (block) => {
+			console.log("eval:block" );
+			return  block.eval();
 		},
 		Blank: (a, b) => {
-			console.log("block:blank");
-			return [""];
+			console.log("eval:blank");
+			return "\n";
 		},
-		Paragraph(a, b) {
-			console.log("block:paragraph" + a.sourceString);
-			return [a.sourceString + b.sourceString + "\n\n"];
+		Paragraph(textblock, rest) {
+			console.log("eval:paragraph" + textblock.sourceString);
+			return textblock.eval() + rest.children.map(c => c.eval()).join("");
 		},
 		Equation: (_1, a, _2, _) => {
 			console.log("equation" + a.sourceString);
 			//return [E(a.blocks().join(""))],
-			return ["$$" + Abraham.nemethToLatex(a.content()) + "$$"];
+			return "$" + a.eval() + "$";
 		},
 		InlineNemeth(_1, a, _2) {
-			return ["$" + Abraham.nemethToLatex(a.content()) + "$"];
+			return "$" + Abraham.nemethToLatex(a.content()) + "$";
+		},
+		TextBlock(block, rest) {
+			console.log("eval:textblock" + block.sourceString);
+			//return [T(a.blocks().join(""))];
+			return block.eval() + rest.children.map(c => c.eval()).join("");
 		},
 		End(_, a) {
-			return [""];
+			return "";
 		},
 		_iter(...children) {
-			console.log("block:iterating over children", children);
-			console.log("children: " + children.map(c => c.blocks().join("")));
-			return children.map(c => {
-					c.blocks().map(block => {
-						console.log("abblock: " + block);
-						let itermatch = parser.grammar.match(block);
-						if (itermatch.failed()) {
-							console.log("match failed on text", block);
-							return [block];
-						} else {
-							console.log("match succeeded on text", text);
-							console.log("parsing text", itermatch.toString());
-
-							let iterblocks = parser.semantics(itermatch).blocks();
-							console.log("parsed blocks", iterblocks);
-							return iterblocks;
-						}
-					});
-				}
-			);
+			return children.map(c => c.eval());
 		}
-	});	
+	});
 
 	console.log("ready to parse");
 
@@ -103,9 +97,9 @@ export function parse_blocks(text) {
 		console.log("match succeeded on text", text);
 		console.log("parsing text", match.toString());
 
-		let blocks = parser.semantics(match).blocks();
-		console.log("parsed blocks", blocks);
-		return blocks;
+		let evals = parser.semantics(match).eval();
+		console.log("parsed blocks", evals);
+		return evals;
 	}
 }
 
