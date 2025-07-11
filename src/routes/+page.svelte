@@ -2,15 +2,19 @@
 	import sample from '$lib/Sample Quiz.brf?raw';
 	import { NEWLINESYM } from '$lib/brailleMap';
 	import { handleFileChange, downloadText } from '$lib/helper.js';
-	import { parse } from '$lib/processFile.js';
+	import { semantics, grammar } from '$lib/processFile.js';
 
 	let text = $state(sample);
 	let filename = $state("example_filename.tex");
 
 	let latex = $derived.by(() => {
-		let latex = parse(text);
-		console.log(latex);
-		return latex;
+		const matchResult = grammar.match(text);
+		console.debug(matchResult.toString());
+		console.debug(matchResult.message);
+		const adapter = semantics(matchResult);
+		const evalstring = adapter.eval();
+		console.debug(evalstring);
+		return evalstring;
 	});
 
 	const authorizedExtensions = ['.brf', '.blf'];
