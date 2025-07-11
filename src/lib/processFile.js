@@ -2,7 +2,6 @@ import Abraham from '$lib/abraham.min.js'; // the Desmos Abraham library
 import { ascii2Braille } from './brailleMap'; // import the ASCII to Braille mapping function
 import * as ohm from 'ohm-js'; // import the ohm-js library for parsing
 import grammarBraille from '$lib/grammarBraille.ohm?raw'; // import the grammar file for parsing
-import grammarInner from '$lib/grammarInner.ohm?raw'; // import the grammar file for parsing
 
 /**
  * A parser is a tool that takes a text file or string and breaks it down into its
@@ -54,9 +53,9 @@ export function parse_blocks(text) {
 			console.log("block:blank");
 			return [""];
 		},
-		Paragraph(a) {
+		Paragraph(a, b) {
 			console.log("block:paragraph" + a.sourceString);
-			return [a.sourceString + "\n\n"];
+			return [a.sourceString + b.sourceString + "\n\n"];
 		},
 		Equation: (_1, a, _2, _) => {
 			console.log("equation" + a.sourceString);
