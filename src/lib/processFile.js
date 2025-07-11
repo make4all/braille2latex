@@ -6,6 +6,9 @@ import grammarInner from '$lib/grammarInner.ohm?raw'; // import the grammar file
 
 const P = (content) => ({ type: 'P', content })
 const E = (content) => ({ type: 'E', content })
+const N = (content) => ({ type: 'N', content })
+const BLANK = () => ({ type: 'BLANK' })
+
 
 /**
  * A parser is a tool that takes a text file or string and breaks it down into its
@@ -16,19 +19,24 @@ const E = (content) => ({ type: 'E', content })
  */
 export function parse_blocks(text) {
 	let blocks = parse_blocks_outer(text);
+	console.log(blocks);
+
 	blocks.map(block => {
 		if ((block.type = 'P')
 			|| (block.type = 'E')
 			|| (block.type = 'N')) {
-			console.log("parsing block", block.toString());
-			let block = parse_blocks_inner(block);
+			console.log("parsing block", block);
+			let parse_result = parse_blocks_inner(block);
 			console.log("match", block);
-			return block;
+			return parse_result;
 			}
 		return block;
 	});
+}
 
-function parse_blocks_outer(text) {}
+function parse_blocks_outer(text) {
+	console.log("parsing outer blocks", text);
+
 	let parser = {}
 	/**
 	  * A grammar specifies how a text file or string is organized (such as
@@ -44,21 +52,58 @@ function parse_blocks_outer(text) {}
 	  * the LaTeX representation of the original text.
 	  */
 	parser.semantics.addOperation('blocks', {
-		_terminal() { return this.sourceString },
-		Blank: (a, b) => ({ type: 'BLANK' }),
-		Paragraph: a => P(a.sourceString),
-		Equation: (_1, a, _2, _) => E(a.blocks().join("")),
+		_terminal() {
+			console.log("terminal: " + this.toString());
+			return this.sourceString;
+		},
+		Blank: (a, b) => {
+			console.log("block:blank");
+			return {type: 'BLANK'};
+		},
+		Paragraph(a) {
+			console.log("block:paragraph" + a.sourceString);
+			return { type: 'P', content: a.sourceString };
+		},
+		Equation: (_1, a, _2, _) => {
+			console.log("equation" + a.sourceString);
+			//return [E(a.blocks().join(""))],
+			return { type: 'E', content: a.sourceString };
+		},
+		End(_, a) {
+			console.log("block:end of block",  a.sourceString);
+			return {type: 'BLANK'};
+		},
 		_iter(...children) {
-			return children.map(c => c.blocks().join(""));
+			console.log("block:iterating over children", children);
+			// return children.map(c => c.blocks().join(""));
+			return {type: 'P', content: children.map(c => {
+				let itermatch = parser.match(c.sourceString);
+				return parser.semantics(itermatch);
+			})}
 		}
-	})
+	});
 
-	let match = parser.grammar.match(text + "\n\n");
-	console.log("parsing text", match.toString());
-	return match;
+	console.log("ready to parse");
+	
+	let match = parser.grammar.match(text);
+
+	if (match.failed()) {
+		console.log("match failed on text", text);
+		return [{ type: 'P', content: text }];
+	} else {
+		console.log("match succeeded on text", text);
+		console.log("parsing text", match.toString());
+		console.log("parsing text", match);
+		
+		let blocks = parser.semantics(match).blocks();
+		console.log("parsed blocks", blocks);
+		return blocks;
+	}
 }
 
 function parse_blocks_inner(block) {
+	console.log("parsing inner block", block);
+
 	let parser = {};
 
 	parser.grammar = ohm.grammar(grammarInner); // create the grammar from the file
@@ -66,20 +111,19 @@ function parse_blocks_inner(block) {
 
 	parser.semantics.addOperation('content', {
 		_terminal() { return this.sourceString },
-		Plain(a) { return ['Plain', a.content().join("")] },
-		Bold(_1, a, _2) { return ['Bold', "\textbf{" + a.content().join("") + "}"] },
-		Italic(_1, a, _2) { return ['Italic', "\textit{" + a.content().join("") + "}"] },
+		Plain(a) { return a.content() },
+		Bold(_1, a, _2) { return "\textbf{" + a.content() + "}" },
+		Italic(_1, a, _2) { return "\textit{" + a.content() + "}" },
 		InlineNemeth(_1, a, _2) {
-			return ['N',
-				N("$" + Abraham.nemethToLatex(ascii2Braille(a.content().join(""))) + "$")]
-		}
+			return "$" + Abraham.nemethToLatex(ascii2Braille(a.content())) + "$"
+		},
 	});
 
-	let match = parser.semantics(match);
-	console.log("parsing text", match.toString());
+	let match = parser.grammar.match(block);
+	console.log("parsing text", match);
 	if (match.failed()) {
-		l("match failed on block", block)
-		block.content = [['plain', block.content]]
+		console.log("match failed on block", block)
+		block.content = block.content;
 	} else {
 		block.content = parser.semantics(match).content()
 	}

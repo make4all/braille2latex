@@ -2,13 +2,13 @@
 	import sample from '$lib/Sample Quiz.brf?raw';
 	import { NEWLINESYM } from '$lib/brailleMap';
 	import { handleFileChange, downloadText } from '$lib/helper.js';
-	import { parse } from '$lib/processFile.js';
+	import { parse_blocks } from '$lib/processFile.js';
 
 	let text = $state(sample);
 	let filename = $state("example_filename.tex");
 
 	let latex = $derived.by(() => {
-		let latex = parse(text);
+		let latex = parse_blocks(text);
 		console.log(latex);
 		return latex;
 	});
