@@ -14,7 +14,10 @@ GrammarBraille {
   Equation = NemethStart (~EndLine ~NemethStart ~NemethEnd any)+ NemethEnd EndLine
   NemethStart = "_%"
   NemethEnd = "_:"
+  InlineNemeth = NemethStart (~NemethStart ~NemethEnd ~Equation any)* NemethEnd
   Space = " " 
+  BoldSymbol = "_*"
+  ItalicSymbol = "_."
   Blank = Space* EndLine
   EndLine = ("\\n" | "\\r\\n" | "\\r") // End of line can be \n, \r\n, or \r
   Line = (~EndLine any)+ EndLine // Line has at least one letter
