@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import Abraham from '$lib/abraham.min.js'; // the Desmos Abraham library 
 import { ascii2Braille } from './brailleMap'; // import the ASCII to Braille mapping function
 import * as ohm from 'ohm-js'; // import the ohm-js library for parsing
@@ -9,6 +10,8 @@ import grammarBraille from '$lib/grammarBraille.ohm?raw'; // import the grammar 
  * to analyze the structure of the text and extract meaningful information from it.
  * In this case, we are using the ohm-js library to create a parser from the grammar files.
  * The parser will be used to parse Braille text and convert it into LaTeX format.
+ * 
+ * @param {string} text
  */
 export function parse_blocks(text) {
 	//let blocks = parse_blocks_outer(text);
@@ -45,38 +48,45 @@ export function parse_blocks(text) {
 	  * the LaTeX representation of the original text.
 	  */
 	parser.semantics.addOperation('eval', {
-		_terminal() {
-			console.log("terminal: " + this.toString());
-			return this.sourceString;
-		},
 		Braille: (a) => {
 			console.log("eval:braille" + typeof(a));
-			return  a.children.map(c => c.eval()).join("");
+			return a.children.map(c => c.eval());
 		},
 		Block: (block) => {
 			console.log("eval:block" );
-			return  block.eval();
+			return block.eval();
 		},
 		Blank: (a, b) => {
 			console.log("eval:blank");
 			return "\n";
 		},
-		Paragraph(textblock, rest) {
-			console.log("eval:paragraph" + textblock.sourceString);
-			return textblock.eval() + rest.children.map(c => c.eval()).join("");
+		Paragraph(children) {
+			console.log("eval:paragraph");
+			return children.children.map(c => c.eval()).join("");
 		},
-		Equation: (_1, a, _2, _) => {
-			console.log("equation" + a.sourceString);
-			//return [E(a.blocks().join(""))],
-			return "$" + a.eval() + "$";
+		Equation: (eqn) => {
+			console.log("eval:equation");
+			return "$" + eqn.eval() + "$";
 		},
 		InlineNemeth(_1, a, _2) {
-			return "$" + Abraham.nemethToLatex(a.content()) + "$";
+			console.log("eval:inline_nemeth");
+			const latex = Abraham.nemethToLatex(ascii2Braille(a.sourceString))
+			if (latex.isError) throw new Error("Invalid Nemeth");
+			return "$" + latex.value + "$";
 		},
-		TextBlock(block, rest) {
-			console.log("eval:textblock" + block.sourceString);
-			//return [T(a.blocks().join(""))];
-			return block.eval() + rest.children.map(c => c.eval()).join("");
+		InlineNemethL(nemeth, plain) {
+			return nemeth.eval() + plain.eval();
+		},
+		InlineNemethR(plain, nemeth) {
+			return plain.eval() + nemeth.eval();
+		},
+		TextBlock(blocks) {
+			console.log("eval:textblock");
+			return blocks.children.map(c => c.eval()).join("");
+		},
+		Plain(text) {
+			console.log("eval:plain");
+			return text.sourceString
 		},
 		End(_, a) {
 			return "";
@@ -89,6 +99,7 @@ export function parse_blocks(text) {
 	console.log("ready to parse");
 
 	let match = parser.grammar.match(text);
+	console.log(match)
 
 	if (match.failed()) {
 		console.log("match failed on text", text);
