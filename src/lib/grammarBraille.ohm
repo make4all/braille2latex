@@ -8,23 +8,20 @@
   */
 
 GrammarBraille {
-  Braille = Block+ 
-  Block = Blank | Equation | Paragraph  | End 
-  Paragraph = TextBlock+
-  Equation =  InlineNemeth 
+  Braille =  Paragraph | Equation | Blank | end
   NemethStart = "_%"
   NemethEnd = "_:"
   BoldSymbol = "_*"
   ItalicSymbol = "_."
-  InlineNemeth = NemethStart (~((EndLine EndLine) | NemethStart | NemethEnd  | Equation)  any)* NemethEnd
-  InlineNemethL = InlineNemeth Plain
-  InlineNemethR = Plain InlineNemeth
-  Bold = BoldSymbol ( ~ ((EndLine EndLine)  | BoldSymbol | InlineNemeth)  any)* BoldSymbol
-  Plain = ( ~( (EndLine EndLine) | BoldSymbol | ItalicSymbol | InlineNemeth ) any)+
-  Italic = ItalicSymbol ( ~((EndLine EndLine) | ItalicSymbol  | InlineNemeth) any)* ItalicSymbol
-  Space = " " 
-  Blank = Space* EndLine
+  InlineNemeth = NemethStart Plain NemethEnd
+  Bold = BoldSymbol Plain BoldSymbol
+  Italic = ItalicSymbol Plain ItalicSymbol
+  Plain = (~EndLine ~NemethStart ~NemethEnd any)+
+  TextBlock = ( Bold | Italic | InlineNemeth | Plain )+
+  NewPar = EndLine EndLine
+  Paragraph =  TextBlock NewPar? 
+  Equation =  EndLine InlineNemeth EndLine
+  
+  Blank = " "* EndLine
   EndLine = ("\\n" | "\\r\\n" | "\\r") 
-  TextBlock = (~(EndLine EndLine) (Italic |InlineNemethL | InlineNemethR | Bold | Plain))+
-  End = (~EndLine any)+ end
 }

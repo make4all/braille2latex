@@ -2,7 +2,7 @@
 * TODO: This constant is for a horrible embarassing hack to replace newlines with a character code 
 * that is hopefully unique temporarily during parsing. To be fixed I HOPE!
 */
-export	const NEWLINESYM = "_*_";
+export const NEWLINESYM = "_*_";
 
 /**
  * Mapping from ASCII characters to Braille Unicode characters.
@@ -110,7 +110,7 @@ const mapping = {
 export function ascii2Braille(input_str) {
 	let out = [];
 	for (const input_char of input_str) {
-		out += mapping[input_char] || '';
+		out += mapping[input_char] || ' '; // Default to space if character not found in mapping
 	}
 	return out;
 }

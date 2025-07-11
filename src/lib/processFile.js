@@ -49,60 +49,75 @@ export function parse_blocks(text) {
 	  */
 	parser.semantics.addOperation('eval', {
 		Braille: (text) => {
-			let res = text.children.map(c => c.eval()).join("");
+			//let res = text.children.map(c => c.eval()).join("");
+			let res = text.eval();
 			console.log("eval:braille: " + res);
 			return res;
 		},
-		Block: (block) => {
-			let res = block.eval();
-			console.log("eval:block: " + res);
-			return res;
-		},
-		Paragraph(children) {
-			let res = children.children.map(c => c.eval()).join("");
-			console.log("eval:paragraph: " + res);
-			return res
-		},
-		Equation: (eqn) => {
-			let res = "$" + eqn.eval() + "$"
-			console.log("eval:equation: " + string);
-			return res;
-		},
-		InlineNemeth(_1, a, _2) {
-			const latex = Abraham.nemethToLatex(ascii2Braille(a.sourceString))
+		InlineNemeth(_1, text, _2) {
+			const latex = Abraham.nemethToLatex(ascii2Braille(text.sourceString))
 			if (latex.isError) throw new Error("Invalid Nemeth");
-			console.log("eval:inline_nemeth: $" + latex.value + "$");
+			console.log("eval:paragraph inline_nemeth: $" + latex.value + "$");
 			return "$" + latex.value + "$";
 		},
-		InlineNemethL(nemeth, plain) {
-			return nemeth.eval() + plain.eval();
+		Bold(_1, text, _2) {
+			let res = "\\textbf{" + text.eval() + "}";
+			console.log("eval:paragraph bf: " + res);
+			return res;
 		},
-		InlineNemethR(plain, nemeth) {
-			return plain.eval() + nemeth.eval();
+		Italic(_1, text, _2) {
+			let res = "\\textit{" + text.eval() + "}";
+			console.log("eval:paragraph it: " + res);
+			return res;
 		},
-
 		Plain(text) {
-			console.log("eval:plain: " + text.sourceString);
-			return text.sourceString
+			//let res = text.children.map(c => c.eval()).join("");
+			let res = text.children.map(c => c.sourceString).join("");
+			//let res = text.sourceString;
+			console.log("eval:paragraph it: " + res);
+			return res;
 		},
+		TextBlock(text) {
+			let res = text.children.map(c => c.eval()).join("\n");
+			console.log("eval:paragraph: " + res);
+			return res + "\n";
+		},
+		// TextBlock(text) {
+		// 	let res = text.eval();
+		// 	console.log("eval:TextBlock: " + res);
+		// 	return res;
+		// },
+		NewPar(_1, _2) {
+			console.log("eval:newpar");
+			return "\n\n";
+		},
+		Paragraph(text, _) {
+			let res = text.eval() + "\n\n";
+			console.log("eval:paragraph: " + res);
+			return res;
+		},
+		// Equation(_1, nemeth) {
+		// 	let equation = "$" + nemeth.eval() + "$";
+		// 	console.log("eval:equation inline_nemeth: $\n\n" + equation);
+		// 	return equation;
+		// },
+		Equation(_1, nemeth, _2) {
+			let equation = "$" + nemeth.eval() + "$";
+			console.log("eval:equation inline_nemeth: $\n\n" + equation);
+			return equation;
+		},
+		// Equation(nemeth) {
+		// 	let equation = "$" + nemeth.eval() + "$";
+		// 	console.log("eval:equation inline_nemeth: $\n\n" + equation);
+		// 	return equation;
+		// },
 		Blank: (a, b) => {
 			console.log("eval:blank");
-			return "\n";
+			return "";
 		},
 		EndLine(_) {
 			console.log("eval:endline");
-			return "\n";
-		},
-		TextBlock(blocks) {
-			let res = blocks.children.map(c => c.eval()).join("\\n");
-			console.log("eval:textblock: " + res);
-			return res;
-		},
-		End(_, a) {
 			return "";
-		},
-		_iter(...children) {
-			return children.map(c => c.eval()).join("");
 		}
 	});
 
