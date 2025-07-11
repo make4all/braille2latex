@@ -55,6 +55,7 @@ export function parse_blocks(text) {
 			return res;
 		},
 		InlineNemeth(_1, text, _2) {
+			console.log("eval:paragraph inline_nemeth: " + text.sourceString + " to :" + ascii2Braille(text.sourceString) + ":");
 			const latex = Abraham.nemethToLatex(ascii2Braille(text.sourceString))
 			if (latex.isError) throw new Error("Invalid Nemeth");
 			console.log("eval:paragraph inline_nemeth: $" + latex.value + "$");

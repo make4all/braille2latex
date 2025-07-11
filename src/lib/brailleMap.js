@@ -9,12 +9,11 @@ export const NEWLINESYM = "_*_";
  * This mapping is based on the Braille ASCII standard.
  */
 const mapping = {
-	'\n': '\n',
 	' ': '⠀',
 	'!': '⠮',
 	'"': '⠐',
 	'#': '⠼',
-	$: '⠫',
+	'$': '⠫',
 	'%': '⠩',
 	'&': '⠯',
 	'': '⠄',
@@ -99,7 +98,6 @@ const mapping = {
 	'\\': '⠳',
 	']': '⠻',
 	'^': '⠘',
-	_: '⠸'
 };
 
 /**
