@@ -9,19 +9,22 @@
 
 GrammarBraille {
   Braille = Block+ 
-  Block = Blank | Paragraph | Equation | End 
-  Paragraph = Line (Line | InlineNemeth | Bold | Italic)* 
-  Equation = NemethStart (~EndLine ~NemethStart ~NemethEnd any)+ NemethEnd EndLine
+  Block = Blank | Equation | Paragraph  | End 
+  Paragraph = TextBlock+
+  Equation =  InlineNemeth 
   NemethStart = "_%"
   NemethEnd = "_:"
   BoldSymbol = "_*"
   ItalicSymbol = "_."
-  InlineNemeth = NemethStart (~Paragraph ~NemethStart ~NemethEnd ~Equation any)* NemethEnd
-  Bold = BoldSymbol (~Paragraph ~BoldSymbol ~NemethStart ~NemethEnd any)* BoldSymbol
-  Italic = ItalicSymbol (~Paragraph ~ItalicSymbol ~NemethStart ~NemethEnd any)* ItalicSymbol
+  InlineNemeth = NemethStart (~((EndLine EndLine) | NemethStart | NemethEnd  | Equation)  any)* NemethEnd
+  InlineNemethL = InlineNemeth Plain
+  InlineNemethR = Plain InlineNemeth
+  Bold = BoldSymbol ( ~ ((EndLine EndLine)  | BoldSymbol | InlineNemeth)  any)* BoldSymbol
+  Plain = ( ~( (EndLine EndLine) | BoldSymbol | ItalicSymbol | InlineNemeth ) any)+
+  Italic = ItalicSymbol ( ~((EndLine EndLine) | ItalicSymbol  | InlineNemeth) any)* ItalicSymbol
   Space = " " 
   Blank = Space* EndLine
-  EndLine = ("\\n" | "\\r\\n" | "\\r") // End of line can be \n, \r\n, or \r
-  Line = (~EndLine any)+ EndLine // Line has at least one letter
+  EndLine = ("\\n" | "\\r\\n" | "\\r") 
+  TextBlock = (~(EndLine EndLine) (Italic |InlineNemethL | InlineNemethR | Bold | Plain))+
   End = (~EndLine any)+ end
 }
