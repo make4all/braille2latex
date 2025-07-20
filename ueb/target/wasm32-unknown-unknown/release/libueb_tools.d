@@ -1,1 +1,0 @@
-/Users/jmankoff/Research/nonvisual/braille/braille2latex/ueb-tools/target/wasm32-unknown-unknown/release/libueb_tools.rlib: /Users/jmankoff/Research/nonvisual/braille/braille2latex/ueb-tools/src/lib.rs
