@@ -1,0 +1,32 @@
+[package]
+name = "ueb"
+version = "0.1.0"
+authors = ["Jen <jmankoff@acm.org>", "Kavi Dey <kavidey@gmail.com>"]
+edition = "2024"
+
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+
+[dependencies]
+wasm-bindgen = "0.2.63"
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "0.1.6", optional = true }
+
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.13"
+
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"
+
+
+[features]
+default = ["console_error_panic_hook"]

@@ -1,4 +1,6 @@
 import { nemeth_to_latex } from './brailleMap'; // import the ASCII to Braille mapping function
+//import liblouis from 'liblouis';
+
 
 const tokens = {
 	NEMETHSTART: 'NEMETHSTART',
@@ -148,7 +150,7 @@ function lex(text) {
 	text = text.replace(/(\r\n|\n|\r)/g, '\n'); // Normalize newlines to \n
 	text = text.replace(/\n' '+/g, '\n'); // Remove whitespace after newlines
 	text = text.replace(/' '+\n/g, '\n'); // Remove whitespace before newlines
-
+	text = text + " "; // add an empty character at the end. 
 	console.log(text);
 	// Iterate through the text character by character
 	// Check for special characters (tokens)
