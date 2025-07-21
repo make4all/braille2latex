@@ -3,6 +3,14 @@
 	import { NEWLINESYM } from '$lib/brailleMap';
 	import { handleFileChange, downloadText } from '$lib/helper.js';
 	import { parse } from '$lib/processFile.js';
+	import { onMount } from 'svelte';
+	import * as ueb from 'ueb';
+	
+	onMount(async () => {
+		await ueb.default();
+		console.log(ueb.add(BigInt(2), BigInt(40)));
+	});
+
 
 	let text = $state(sample);
 	let filename = $state("example_filename.tex");
