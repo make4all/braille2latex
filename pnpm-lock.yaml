@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      ohm-js:
-        specifier: ^17.1.0
-        version: 17.1.0
     devDependencies:
       '@eslint/compat':
         specifier: ^1.2.5
@@ -42,6 +38,9 @@ importers:
       globals:
         specifier: ^16.0.0
         version: 16.3.0
+      liblouis:
+        specifier: ^0.4.0
+        version: 0.4.0
       prettier:
         specifier: ^3.4.2
         version: 3.6.2
@@ -837,6 +836,12 @@ packages:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
 
+  liblouis-build@3.2.0-rc:
+    resolution: {integrity: sha512-wRQKhsc0RXDrOQbRN67qvKdN5facgINMYu7Ot0VMvNIawVHTxdkIfjjC7aq1jrtrwdbMAvMSP3nttq+I4p/A4Q==}
+
+  liblouis@0.4.0:
+    resolution: {integrity: sha512-ViuoMFbSbf39RyXYU/Q9IeQ5IYUdJVPrgz5nmXjkNkK5rmorivDDWRZLibPhEaip0Dpt00CG+NX1WQGHWCa+ow==}
+
   lightningcss-darwin-arm64@1.30.1:
     resolution: {integrity: sha512-c8JK7hyE65X1MHMN+Viq9n11RRC7hgin3HhYKhrMyaXflk5GVplZ60IxyoVtzILeKr+xAJwg6zK6sjTBJ0FKYQ==}
     engines: {node: '>= 12.0.0'}
@@ -952,10 +957,6 @@ packages:
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
-
-  ohm-js@17.1.0:
-    resolution: {integrity: sha512-xc3B5dgAjTBQGHaH7B58M2Pmv6WvzrJ/3/7LeUzXNg0/sY3jQPdSd/S2SstppaleO77rifR1tyhdfFGNIwxf2Q==}
-    engines: {node: '>=0.12.1'}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -1871,6 +1872,12 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
+  liblouis-build@3.2.0-rc: {}
+
+  liblouis@0.4.0:
+    dependencies:
+      liblouis-build: 3.2.0-rc
+
   lightningcss-darwin-arm64@1.30.1:
     optional: true
 
@@ -1951,8 +1958,6 @@ snapshots:
   nanoid@3.3.11: {}
 
   natural-compare@1.4.0: {}
-
-  ohm-js@17.1.0: {}
 
   optionator@0.9.4:
     dependencies:

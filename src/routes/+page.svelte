@@ -5,15 +5,47 @@
 	import { parse } from '$lib/processFile.js';
 
 	let text = $state(sample);
-	let filename = $state("example_filename.tex");
+	let filename = $state('example_filename.tex');
 
 	let latex = $derived.by(() => {
-		let evalstring = parse(text);
-		console.debug(evalstring);
-		return evalstring;
+		// let evalstring = parse(text);
+		// console.debug(evalstring);
+		// return evalstring;
 	});
 
 	const authorizedExtensions = ['.brf', '.blf'];
+
+	import { assets } from '$app/paths';
+	import liblouis from 'liblouis/easy-api';
+
+	// includes the following tables: unicode.dis, en-ueb-g2.ctb, en-ueb-g1.ctb, en-ueb-chardefs.uti, latinLetterDef8Dots.uti, en-ueb-math.ctb, braille-patterns.cti
+	const capi_url = assets + 'liblouis/build-tables-embeded-root-utf16.js';
+	const easyapi_url = assets + 'liblouis/easy-api.js'
+
+	const asyncLiblouis = new liblouis.EasyApiAsync({
+		capi: capi_url,
+		easyapi: easyapi_url
+	});
+
+	// comment out to turn of logs
+	// asyncLiblouis.setLogLevel(0);
+
+	asyncLiblouis.translateString(
+		'unicode.dis,en-ueb-g2.ctb',
+		'Hi, Mom! You owe me: $3.50.',
+		e => {
+			console.log(e)
+		}
+	);
+
+	asyncLiblouis.backTranslateString(
+		'en-ueb-g2.ctb',
+		// '⠠⠓⠊⠂ ⠠⠍⠕⠍⠖ ⠠⠽ ⠪⠑ ⠍⠑⠒ ⠈⠎⠼⠉⠲⠑⠚⠲',
+		',hi1 ,mom6 ,y {e me3 `s#c4ej4',
+		e => {
+			console.log(e)
+		}
+	);
 </script>
 
 <!-- Styling is done with https://tailwindcss.com/, add a css class with whatever style you want -->
@@ -35,7 +67,7 @@
 					onchange={(event) => {
 						handleFileChange(event, (result, fname) => {
 							text = result;
-							filename = fname.split('.').slice(0,-1).join('.') + '.tex'
+							filename = fname.split('.').slice(0, -1).join('.') + '.tex';
 						});
 					}}
 					id="braille-file"
@@ -81,7 +113,9 @@
 					id="latex-download"
 					name="latex-download"
 					class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-800 dark:hover:bg-blue-900"
-					onclick={() => {downloadText(latex, filename)}}
+					onclick={() => {
+						downloadText(latex, filename);
+					}}
 				>
 					Download Input as File
 				</button>
