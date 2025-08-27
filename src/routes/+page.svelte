@@ -1,26 +1,29 @@
 <script>
 	import sample from '$lib/Sample Quiz.brf?raw';
-	import { NEWLINESYM } from '$lib/brailleMap';
 	import { handleFileChange, downloadText } from '$lib/helper.js';
 	import { parse } from '$lib/processFile.js';
+	import liblouis from 'liblouis/easy-api';
+
+	import { assets } from '$app/paths';
+
+	// includes the following tables: unicode.dis, en-ueb-g2.ctb, en-ueb-g1.ctb, en-ueb-chardefs.uti, latinLetterDef8Dots.uti, en-ueb-math.ctb, braille-patterns.cti
+	const capi_url = assets + 'liblouis/build-tables-embeded-root-utf16.js';
+	const easyapi_url = assets + 'liblouis/easy-api.js'
+	console.log(liblouis);
+
+	console.log(capi_url);
+	console.log(easyapi_url);
 
 	let text = $state(sample);
 	let filename = $state('example_filename.tex');
 
 	let latex = $derived.by(() => {
-		// let evalstring = parse(text);
-		// console.debug(evalstring);
-		// return evalstring;
+		let evalstring = parse(text);
+		console.debug(evalstring);
+		return evalstring;
 	});
 
 	const authorizedExtensions = ['.brf', '.blf'];
-
-	import { assets } from '$app/paths';
-	import liblouis from 'liblouis/easy-api';
-
-	// includes the following tables: unicode.dis, en-ueb-g2.ctb, en-ueb-g1.ctb, en-ueb-chardefs.uti, latinLetterDef8Dots.uti, en-ueb-math.ctb, braille-patterns.cti
-	const capi_url = assets + 'liblouis/build-tables-embeded-root-utf16.js';
-	const easyapi_url = assets + 'liblouis/easy-api.js'
 
 	const asyncLiblouis = new liblouis.EasyApiAsync({
 		capi: capi_url,
