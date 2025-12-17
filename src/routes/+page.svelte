@@ -5,11 +5,11 @@
 	import { ascii2Braille, braille2Ascii } from '$lib/brailleMap.js';
 	import liblouis from 'liblouis/easy-api';
 
-	import { assets, base } from '$app/paths';
+	import { base } from '$app/paths';
 
 	// includes the following tables: unicode.dis, en-ueb-g2.ctb, en-ueb-g1.ctb, en-ueb-chardefs.uti, latinLetterDef8Dots.uti, en-ueb-math.ctb, braille-patterns.cti
-	const capi_url = base + assets + 'liblouis/build-tables-embeded-root-utf16.js';
-	const easyapi_url = base + assets + 'liblouis/easy-api.js';
+	const capi_url = base + '/liblouis/build-tables-embeded-root-utf16.js';
+	const easyapi_url = base + '/liblouis/easy-api.js';
 	console.log(liblouis);
 
 	console.log(capi_url);
