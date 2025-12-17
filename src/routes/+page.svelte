@@ -51,6 +51,8 @@
 		const hasAscii = containsAscii(inputValue);
 		const hasBraille = containsBraille(inputValue);
 		
+		console.log('Input detected - ASCII:', hasAscii, 'Braille:', hasBraille, 'Input:', inputValue);
+		
 		if (hasAscii && !hasBraille) {
 			// Pure ASCII input - convert to braille for display, keep ASCII for processing
 			text = inputValue;
@@ -58,7 +60,9 @@
 			lastBrailleText = brailleText;
 		} else if (hasBraille) {
 			// Braille input (with or without ASCII) - convert to ASCII for processing
-			text = braille2Ascii(inputValue);
+			const asciiConverted = braille2Ascii(inputValue);
+			console.log('Braille converted to ASCII:', asciiConverted);
+			text = asciiConverted;
 			brailleText = inputValue;
 			lastBrailleText = inputValue;
 			
@@ -75,9 +79,15 @@
 	}
 
 	let latex = $derived.by(async () => {
-		let evalstring = await parse(text, selectedTable);
-		console.debug(evalstring);
-		return evalstring;
+		try {
+			console.log('Parsing with table:', selectedTable, 'Text:', text);
+			let evalstring = await parse(text, selectedTable);
+			console.debug('Generated LaTeX:', evalstring);
+			return evalstring;
+		} catch (error) {
+			console.error('Parse error:', error);
+			return `Error: ${error.message}`;
+		}
 	});
 
 	const authorizedExtensions = ['.brf', '.blf'];
