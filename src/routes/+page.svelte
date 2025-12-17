@@ -5,11 +5,11 @@
 	import { ascii2Braille, braille2Ascii } from '$lib/brailleMap.js';
 	import liblouis from 'liblouis/easy-api';
 
-	import { assets } from '$app/paths';
+	import { assets, base } from '$app/paths';
 
 	// includes the following tables: unicode.dis, en-ueb-g2.ctb, en-ueb-g1.ctb, en-ueb-chardefs.uti, latinLetterDef8Dots.uti, en-ueb-math.ctb, braille-patterns.cti
-	const capi_url = assets + 'liblouis/build-tables-embeded-root-utf16.js';
-	const easyapi_url = assets + 'liblouis/easy-api.js'
+	const capi_url = base + assets + 'liblouis/build-tables-embeded-root-utf16.js';
+	const easyapi_url = base + assets + 'liblouis/easy-api.js';
 	console.log(liblouis);
 
 	console.log(capi_url);
@@ -128,12 +128,18 @@
 			console.log('Parsing with table:', selectedTable, 'Text:', text);
 			let evalstring = await parse(text, selectedTable);
 			console.debug('Generated LaTeX:', evalstring);
+			resolvedLatex = evalstring;
 			return evalstring;
 		} catch (error) {
 			console.error('Parse error:', error);
-			return `Error: ${error.message}`;
+			const errorMsg = `Error: ${error.message}`;
+			resolvedLatex = errorMsg;
+			return errorMsg;
 		}
 	});
+	
+	// Track the resolved LaTeX for download
+	let resolvedLatex = $state('');
 
 	const authorizedExtensions = ['.brf', '.blf'];
 
@@ -233,11 +239,15 @@
 						class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5 whitespace-pre-line max-h-96 overflow-y-auto"
 					>
 						{#await latex}
-							<span class="text-gray-500">Processing...</span>
+							<span class="text-gray-500">Processing... (check browser console for errors)</span>
 						{:then result}
-							{result}
+							{#if result?.startsWith('Error')}
+								<span class="text-red-500">{result}</span>
+							{:else}
+								{result}
+							{/if}
 						{:catch error}
-							<span class="text-red-500">Error: {error.message}</span>
+							<span class="text-red-500">Fatal Error: {error?.message || error}</span>
 						{/await}
 					</div>
 				</div>
@@ -253,7 +263,7 @@
 					name="latex-download"
 					class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-800 dark:hover:bg-blue-900"
 					onclick={() => {
-						downloadText(latex, filename);
+						downloadText(resolvedLatex, filename);
 					}}
 				>
 					Download Input as File
