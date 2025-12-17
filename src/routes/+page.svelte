@@ -29,6 +29,15 @@
 	let brailleText = $state(ascii2Braille(sample));
 	let lastBrailleText = ascii2Braille(sample);
 	
+	// Display value: always show braille, converting ASCII to braille if needed
+	let displayBrailleText = $derived.by(() => {
+		if (containsAscii(brailleText) && !containsBraille(brailleText)) {
+			// Contains ASCII - convert to braille for display
+			return ascii2Braille(brailleText);
+		}
+		return brailleText;
+	});
+	
 	// Check if a string contains braille characters (Unicode 0x2800-0x28FF range)
 	function containsBraille(str) {
 		return /[\u2800-\u28FF]/.test(str);
@@ -39,41 +48,77 @@
 		return /[^\u2800-\u28FF\s\n]/.test(str);
 	}
 	
+	// Convert any remaining ASCII letters to braille in a mixed string
+	function sanitizeToAllBraille(str) {
+		let result = '';
+		for (const char of str) {
+			if (/[a-z]/i.test(char)) {
+				// It's a letter - convert to braille
+				result += ascii2Braille(char);
+			} else {
+				// Keep as-is (braille, space, newline, etc.)
+				result += char;
+			}
+		}
+		return result;
+	}
+	
+	// Intercept and convert ASCII letters before they enter the textarea
+	function handleBeforeInput(event) {
+		if (event.data && /[a-z]/i.test(event.data)) {
+			// It's a letter - convert it to braille
+			const brailleChar = ascii2Braille(event.data);
+			console.log('Converting letter before input:', event.data, '=>', brailleChar);
+			event.preventDefault();
+			
+			// Insert the braille character at the cursor position
+			const textarea = event.target;
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const currentValue = textarea.value;
+			
+			const newValue = currentValue.substring(0, start) + brailleChar + currentValue.substring(end);
+			textarea.value = newValue;
+			brailleText = newValue;
+			text = braille2Ascii(newValue);
+			lastBrailleText = newValue;
+			
+			// Move cursor to after inserted character
+			textarea.setSelectionRange(start + brailleChar.length, start + brailleChar.length);
+		}
+	}
+	
 	// Update both text representations when user types or pastes
 	function handleBrailleInput(event) {
-		const textarea = event.target;
-		const inputValue = textarea.value;
-		const cursorPos = textarea.selectionStart;
+		let inputValue = event.target.value;
 		
-		const oldValue = lastBrailleText;
+		// Sanitize any stray ASCII letters to braille (for paste events)
+		inputValue = sanitizeToAllBraille(inputValue);
 		
 		// Determine if input contains ASCII or braille
 		const hasAscii = containsAscii(inputValue);
 		const hasBraille = containsBraille(inputValue);
 		
-		console.log('Input detected - ASCII:', hasAscii, 'Braille:', hasBraille, 'Input:', inputValue);
+		console.log('Input detected - ASCII:', hasAscii, 'Braille:', hasBraille);
 		
 		if (hasAscii && !hasBraille) {
 			// Pure ASCII input - convert to braille for display, keep ASCII for processing
+			const brailleConverted = ascii2Braille(inputValue);
+			console.log('ASCII to Braille:', inputValue, '=>', brailleConverted);
+			brailleText = brailleConverted;
 			text = inputValue;
-			brailleText = ascii2Braille(inputValue);
-			lastBrailleText = brailleText;
+			lastBrailleText = brailleConverted;
 		} else if (hasBraille) {
-			// Braille input (with or without ASCII) - convert to ASCII for processing
+			// Braille input - convert to ASCII for processing
 			const asciiConverted = braille2Ascii(inputValue);
-			console.log('Braille converted to ASCII:', asciiConverted);
-			text = asciiConverted;
+			console.log('Braille to ASCII:', inputValue, '=>', asciiConverted);
 			brailleText = inputValue;
+			text = asciiConverted;
 			lastBrailleText = inputValue;
-			
-			// Restore cursor position after potential re-render
-			requestAnimationFrame(() => {
-				textarea.setSelectionRange(cursorPos, cursorPos);
-			});
 		} else {
 			// Only whitespace or empty
-			text = inputValue;
 			brailleText = inputValue;
+			text = inputValue;
 			lastBrailleText = inputValue;
 		}
 	}
@@ -175,6 +220,7 @@
 					<textarea
 						id="braille-text"
 						value={brailleText}
+						onbeforeinput={handleBeforeInput}
 						oninput={handleBrailleInput}
 						class="font-mono bg-gray-900 text-gray-100 rounded-lg p-2.5 whitespace-pre w-full h-96 resize-none overflow-y-auto"
 						placeholder="Enter braille text here or upload a file..."
