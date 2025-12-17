@@ -29,45 +29,46 @@
 	let brailleText = $state(ascii2Braille(sample));
 	let lastBrailleText = ascii2Braille(sample);
 	
-	// Update both text representations when user types
+	// Check if a string contains braille characters (Unicode 0x2800-0x28FF range)
+	function containsBraille(str) {
+		return /[\u2800-\u28FF]/.test(str);
+	}
+	
+	// Check if a string contains ASCII text (not just braille or whitespace)
+	function containsAscii(str) {
+		return /[^\u2800-\u28FF\s\n]/.test(str);
+	}
+	
+	// Update both text representations when user types or pastes
 	function handleBrailleInput(event) {
 		const textarea = event.target;
 		const inputValue = textarea.value;
 		const cursorPos = textarea.selectionStart;
 		
-		// Find what changed
 		const oldValue = lastBrailleText;
 		
-		// Detect if user is typing ASCII (new characters are not braille)
-		let hasNewAscii = false;
-		if (inputValue.length > oldValue.length) {
-			// Something was added - check if it's ASCII
-			for (let i = 0; i < inputValue.length; i++) {
-				if (inputValue[i] !== oldValue[i]) {
-					const char = inputValue[i];
-					// Check if it's NOT a braille character
-					if (!/[\u2800-\u28FF]/.test(char)) {
-						hasNewAscii = true;
-						break;
-					}
-				}
-			}
-		}
+		// Determine if input contains ASCII or braille
+		const hasAscii = containsAscii(inputValue);
+		const hasBraille = containsBraille(inputValue);
 		
-		if (hasNewAscii) {
-			// User typed ASCII - convert entire input from braille+ASCII to pure ASCII, then back to braille
-			const mixedToAscii = braille2Ascii(inputValue);
-			text = mixedToAscii;
-			brailleText = ascii2Braille(mixedToAscii);
+		if (hasAscii && !hasBraille) {
+			// Pure ASCII input - convert to braille for display, keep ASCII for processing
+			text = inputValue;
+			brailleText = ascii2Braille(inputValue);
 			lastBrailleText = brailleText;
+		} else if (hasBraille) {
+			// Braille input (with or without ASCII) - convert to ASCII for processing
+			text = braille2Ascii(inputValue);
+			brailleText = inputValue;
+			lastBrailleText = inputValue;
 			
-			// Restore cursor position
+			// Restore cursor position after potential re-render
 			requestAnimationFrame(() => {
 				textarea.setSelectionRange(cursorPos, cursorPos);
 			});
 		} else {
-			// User modified braille directly or deleted - convert to ASCII for processing
-			text = braille2Ascii(inputValue);
+			// Only whitespace or empty
+			text = inputValue;
 			brailleText = inputValue;
 			lastBrailleText = inputValue;
 		}
