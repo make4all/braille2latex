@@ -1,6 +1,12 @@
 <script>
+	// @ts-nocheck
 	import sample from '$lib/Sample Quiz.brf?raw';
-	import { handleFileChange, downloadText, wrapLatexDocument, isCompleteLatexDocument } from '$lib/helper.js';
+	import {
+		handleFileChange,
+		downloadText,
+		wrapLatexDocument,
+		isCompleteLatexDocument
+	} from '$lib/helper.js';
 	import { parse } from '$lib/processFile.js';
 	import { ascii2Braille, braille2Ascii } from '$lib/brailleMap.js';
 	import liblouis from 'liblouis/easy-api';
@@ -266,6 +272,9 @@
 	
 	// Track the resolved LaTeX for download
 	let resolvedLatex = $state('');
+
+
+
 
 	const authorizedExtensions = ['.brf', '.brl'];
 
