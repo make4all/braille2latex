@@ -266,7 +266,7 @@
 	// Track the resolved LaTeX for download
 	let resolvedLatex = $state('');
 
-	const authorizedExtensions = ['.brf', '.blf'];
+	const authorizedExtensions = ['.brf', '.brl'];
 
 	const asyncLiblouis = new liblouis.EasyApiAsync({
 		capi: capi_url,
