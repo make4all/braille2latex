@@ -7,9 +7,10 @@
 
 	import { base } from '$app/paths';
 
-	// includes the following tables: unicode.dis, en-ueb-g2.ctb, en-ueb-g1.ctb, en-ueb-chardefs.uti, latinLetterDef8Dots.uti, en-ueb-math.ctb, braille-patterns.cti
-	const capi_url = base + 'liblouis/build-tables-embeded-root-utf16.js';
+	// Use liblouis 3.2.0-rc with tables loaded on demand from static/liblouis/tables
+	const capi_url = base + 'liblouis/build-no-tables-utf16.js';
 	const easyapi_url = base + 'liblouis/easy-api.js';
+	const tables_url = base + 'liblouis/tables/';
 	console.log(liblouis);
 
 	console.log(capi_url);
@@ -273,18 +274,36 @@
 		easyapi: easyapi_url
 	});
 
-	// comment out to turn of logs
-	// asyncLiblouis.setLogLevel(0);
+	function enableOnDemandTables() {
+		return new Promise((resolve, reject) => {
+			const timeoutId = setTimeout(() => reject(new Error('enableOnDemandTableLoading timed out')), 10000);
+			asyncLiblouis.enableOnDemandTableLoading(tables_url, () => {
+				clearTimeout(timeoutId);
+				resolve();
+			});
+		});
+	}
 
-	// Initialize the Worker with a version check to ensure it's ready
-	console.log('[init] Creating asyncLiblouis Worker...');
-	asyncLiblouis.version(function() {
-		console.log('[init] version() callback invoked - Worker is ready');
-		liblouisReady = true;
-		parseReady = true;  // Once liblouis is ready, we can start parsing
-		console.log('[liblouis] Worker initialized and ready');
+	function initializeLiblouis() {
+		console.log('[init] Creating asyncLiblouis Worker...');
+		const versionReady = new Promise((resolve, reject) => {
+			const timeoutId = setTimeout(() => reject(new Error('version() timed out')), 10000);
+			asyncLiblouis.version(() => {
+				clearTimeout(timeoutId);
+				resolve();
+			});
+		});
+
+		return Promise.all([enableOnDemandTables(), versionReady]).then(() => {
+			liblouisReady = true;
+			parseReady = true;
+			console.log('[liblouis] Worker initialized and ready');
+		});
+	}
+
+	initializeLiblouis().catch(error => {
+		console.error('[liblouis] Initialization failed', error);
 	});
-	console.log('[init] version() callback registered, waiting for Worker handshake...');
 </script>
 
 <!-- Styling is done with https://tailwindcss.com/, add a css class with whatever style you want -->
