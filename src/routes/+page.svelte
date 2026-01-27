@@ -1,6 +1,6 @@
 <script>
 	import sample from '$lib/Sample Quiz.brf?raw';
-	import { handleFileChange, downloadText } from '$lib/helper.js';
+	import { handleFileChange, downloadText, wrapLatexDocument, isCompleteLatexDocument } from '$lib/helper.js';
 	import { parse } from '$lib/processFile.js';
 	import { ascii2Braille, braille2Ascii } from '$lib/brailleMap.js';
 	import liblouis from 'liblouis/easy-api';
@@ -400,7 +400,11 @@
 					name="latex-download"
 					class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-800 dark:hover:bg-blue-900"
 					onclick={() => {
-						downloadText(resolvedLatex, filename);
+						const complete = wrapLatexDocument(resolvedLatex);
+						if (!isCompleteLatexDocument(complete)) {
+							console.warn('[download] Wrapped LaTeX document may be incomplete');
+						}
+						downloadText(complete, filename);
 					}}
 				>
 					Download Input as File
