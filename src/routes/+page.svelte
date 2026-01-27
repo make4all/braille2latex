@@ -29,6 +29,10 @@
 	let brailleText = $state(ascii2Braille(sample));
 	let lastBrailleText = ascii2Braille(sample);
 	
+	// Track if the Worker is ready
+	let liblouisReady = $state(false);
+	let parseReady = $state(false);
+	
 	// Display value: always show braille, converting ASCII to braille if needed
 	let displayBrailleText = $derived.by(() => {
 		if (containsAscii(brailleText) && !containsBraille(brailleText)) {
@@ -124,24 +128,19 @@
 	}
 
 	let latex = $derived.by(async () => {
+		// Wait for Worker to be ready before attempting to parse
+		if (!parseReady) {
+			console.log('[latex] Waiting for parser to be ready...');
+			return 'Initializing...';
+		}
+		
 		try {
-			console.log('Parsing with table:', selectedTable, 'Text (first 100 chars):', text.substring(0, 100));
+			console.log('[latex] Parsing with table:', selectedTable);
+			console.log('[latex] Input text length:', text.length);
 			
-			// First, convert ASCII braille to Unicode if needed
-			let brailleInput = text;
-			const isAsciBraille = /[,'""`#]|^[a-z0-9\s]+$/mi.test(text);
-			
-			if (isAsciBraille) {
-				console.log('[ASCII Braille detected] Converting to Unicode...');
-				brailleInput = await convertAsciBrailleToUnicode(text, selectedTable);
-				console.log('Converted to Unicode:', brailleInput.substring(0, 100));
-			} else {
-				console.log('[Unicode Braille detected] Using directly');
-			}
-			
-			// Now parse with the (possibly converted) braille input
-			let evalstring = await parse(brailleInput, selectedTable);
-			console.debug('Generated LaTeX (raw):', evalstring);
+			// Parse the braille input with the selected table
+			let evalstring = await parse(text, selectedTable);
+			console.log('[latex] Parse complete');
 			resolvedLatex = evalstring;
 			return evalstring;
 		} catch (error) {
@@ -158,22 +157,31 @@
 			let attempt = 0;
 			const maxAttempts = 2;
 			
+			console.log('[convertAsciBrailleToUnicode] ========== START ==========');
+			console.log('[convertAsciBrailleToUnicode] Input length:', asciBraille.length);
+			console.log('[convertAsciBrailleToUnicode] Input (JSON):', JSON.stringify(asciBraille));
+			
 			const attemptTranslate = () => {
 				attempt++;
 				try {
 					console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt}. Input:`, asciBraille.substring(0, 100));
 					
 					let resolved = false;
+					const callbackId = Math.random();
+					console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} registered callback ID: ${callbackId}`);
+					
 					const timeout = setTimeout(() => {
 						if (!resolved) {
-							console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} timeout`);
+							console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} TIMEOUT - callback ${callbackId} was never invoked after 5s`);
 							resolved = true;
 							
 							// Retry once after a delay if we haven't hit max attempts
 							if (attempt < maxAttempts) {
-								console.log(`[convertAsciBrailleToUnicode] Retrying after delay...`);
+								console.log(`[convertAsciBrailleToUnicode] Retrying attempt ${attempt + 1} after 500ms delay...`);
 								setTimeout(attemptTranslate, 500);
 							} else {
+								console.warn(`[convertAsciBrailleToUnicode] Max attempts reached, falling back to original input`);
+								console.log('[convertAsciBrailleToUnicode] Fallback return (JSON):', JSON.stringify(asciBraille));
 								resolve(asciBraille);
 							}
 						}
@@ -182,41 +190,57 @@
 					// Wait for Worker to be ready if needed
 					const tryTranslate = () => {
 						if (!liblouisReady) {
+							console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} waiting for liblouisReady...`);
 							setTimeout(tryTranslate, 100);
 							return;
 						}
 						
+						console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} liblouis is ready, calling translateString...`);
 						try {
 							// Ensure unicode.dis is included in table specification
 							const fullTable = table.includes('unicode.dis') ? table : `unicode.dis,${table}`;
+							console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} using table: ${fullTable}`);
 							
 							asyncLiblouis.translateString(
 								fullTable,
 								asciBraille,
 								function(result) {
+									console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} callback ${callbackId} INVOKED`);
+									console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} result type: ${typeof result}`);
+									console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} result is null/undefined: ${result == null}`);
+									if (result) {
+										console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} result length: ${result.length}`);
+										console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} result (JSON): ${JSON.stringify(result.substring(0, 100))}`);
+									}
 									if (!resolved) {
 										resolved = true;
 										clearTimeout(timeout);
 										if (result) {
-											console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} success. Output:`, result.substring(0, 100));
+											console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} SUCCESS - resolving with result`);
+											console.log(`[convertAsciBrailleToUnicode] Full result (JSON): ${JSON.stringify(result)}`);
 											resolve(result);
 										} else {
-											console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} no result`);
+											console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} no result returned, falling back`);
 											resolve(asciBraille);
 										}
+									} else {
+										console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} callback arrived after resolution`);
 									}
 								}
 							);
+							console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} callback registered, waiting for response...`);
 						} catch (innerError) {
 							if (!resolved) {
 								resolved = true;
 								clearTimeout(timeout);
-								console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} inner exception:`, innerError);
+								console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} EXCEPTION in translateString:`, innerError);
 								
 								// Retry once after a delay if we haven't hit max attempts
 								if (attempt < maxAttempts) {
+									console.log(`[convertAsciBrailleToUnicode] Retrying attempt ${attempt + 1} after 500ms...`);
 									setTimeout(attemptTranslate, 500);
 								} else {
+									console.warn(`[convertAsciBrailleToUnicode] Max attempts reached, falling back`);
 									resolve(asciBraille);
 								}
 							}
@@ -225,7 +249,7 @@
 					
 					tryTranslate();
 				} catch (error) {
-					console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} outer exception:`, error);
+					console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} OUTER EXCEPTION:`, error);
 					if (attempt < maxAttempts) {
 						setTimeout(attemptTranslate, 500);
 					} else {
@@ -234,6 +258,7 @@
 				}
 			};
 			
+			console.log(`[convertAsciBrailleToUnicode] Starting translation attempts for input length ${asciBraille.length}`);
 			attemptTranslate();
 		});
 	}
@@ -252,29 +277,14 @@
 	// asyncLiblouis.setLogLevel(0);
 
 	// Initialize the Worker with a version check to ensure it's ready
-	let liblouisReady = false;
+	console.log('[init] Creating asyncLiblouis Worker...');
 	asyncLiblouis.version(function() {
+		console.log('[init] version() callback invoked - Worker is ready');
 		liblouisReady = true;
+		parseReady = true;  // Once liblouis is ready, we can start parsing
 		console.log('[liblouis] Worker initialized and ready');
 	});
-
-	// Test calls after initialization
-	asyncLiblouis.translateString(
-		'unicode.dis,en-ueb-g2.ctb',
-		'Hi, Mom! You owe me: $3.50.',
-		e => {
-			console.log(e)
-		}
-	);
-
-	asyncLiblouis.backTranslateString(
-		'en-ueb-g2.ctb',
-		// '⠠⠓⠊⠂ ⠠⠍⠕⠍⠖ ⠠⠽ ⠪⠑ ⠍⠑⠒ ⠈⠎⠼⠉⠲⠑⠚⠲',
-		',hi1 ,mom6 ,y {e me3 `s#c4ej4',
-		e => {
-			console.log(e)
-		}
-	);
+	console.log('[init] version() callback registered, waiting for Worker handshake...');
 </script>
 
 <!-- Styling is done with https://tailwindcss.com/, add a css class with whatever style you want -->
