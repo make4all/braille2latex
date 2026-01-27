@@ -8,8 +8,8 @@
 	import { base } from '$app/paths';
 
 	// includes the following tables: unicode.dis, en-ueb-g2.ctb, en-ueb-g1.ctb, en-ueb-chardefs.uti, latinLetterDef8Dots.uti, en-ueb-math.ctb, braille-patterns.cti
-	const capi_url = base + '/liblouis/build-tables-embeded-root-utf16.js';
-	const easyapi_url = base + '/liblouis/easy-api.js';
+	const capi_url = base + 'liblouis/build-tables-embeded-root-utf16.js';
+	const easyapi_url = base + 'liblouis/easy-api.js';
 	console.log(liblouis);
 
 	console.log(capi_url);
@@ -125,9 +125,23 @@
 
 	let latex = $derived.by(async () => {
 		try {
-			console.log('Parsing with table:', selectedTable, 'Text:', text);
-			let evalstring = await parse(text, selectedTable);
-			console.debug('Generated LaTeX:', evalstring);
+			console.log('Parsing with table:', selectedTable, 'Text (first 100 chars):', text.substring(0, 100));
+			
+			// First, convert ASCII braille to Unicode if needed
+			let brailleInput = text;
+			const isAsciBraille = /[,'""`#]|^[a-z0-9\s]+$/mi.test(text);
+			
+			if (isAsciBraille) {
+				console.log('[ASCII Braille detected] Converting to Unicode...');
+				brailleInput = await convertAsciBrailleToUnicode(text, selectedTable);
+				console.log('Converted to Unicode:', brailleInput.substring(0, 100));
+			} else {
+				console.log('[Unicode Braille detected] Using directly');
+			}
+			
+			// Now parse with the (possibly converted) braille input
+			let evalstring = await parse(brailleInput, selectedTable);
+			console.debug('Generated LaTeX (raw):', evalstring);
 			resolvedLatex = evalstring;
 			return evalstring;
 		} catch (error) {
@@ -137,6 +151,92 @@
 			return errorMsg;
 		}
 	});
+	
+	// Convert ASCII braille notation to Unicode braille
+	function convertAsciBrailleToUnicode(asciBraille, table) {
+		return new Promise((resolve) => {
+			let attempt = 0;
+			const maxAttempts = 2;
+			
+			const attemptTranslate = () => {
+				attempt++;
+				try {
+					console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt}. Input:`, asciBraille.substring(0, 100));
+					
+					let resolved = false;
+					const timeout = setTimeout(() => {
+						if (!resolved) {
+							console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} timeout`);
+							resolved = true;
+							
+							// Retry once after a delay if we haven't hit max attempts
+							if (attempt < maxAttempts) {
+								console.log(`[convertAsciBrailleToUnicode] Retrying after delay...`);
+								setTimeout(attemptTranslate, 500);
+							} else {
+								resolve(asciBraille);
+							}
+						}
+					}, 5000);
+					
+					// Wait for Worker to be ready if needed
+					const tryTranslate = () => {
+						if (!liblouisReady) {
+							setTimeout(tryTranslate, 100);
+							return;
+						}
+						
+						try {
+							// Ensure unicode.dis is included in table specification
+							const fullTable = table.includes('unicode.dis') ? table : `unicode.dis,${table}`;
+							
+							asyncLiblouis.translateString(
+								fullTable,
+								asciBraille,
+								function(result) {
+									if (!resolved) {
+										resolved = true;
+										clearTimeout(timeout);
+										if (result) {
+											console.log(`[convertAsciBrailleToUnicode] Attempt ${attempt} success. Output:`, result.substring(0, 100));
+											resolve(result);
+										} else {
+											console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} no result`);
+											resolve(asciBraille);
+										}
+									}
+								}
+							);
+						} catch (innerError) {
+							if (!resolved) {
+								resolved = true;
+								clearTimeout(timeout);
+								console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} inner exception:`, innerError);
+								
+								// Retry once after a delay if we haven't hit max attempts
+								if (attempt < maxAttempts) {
+									setTimeout(attemptTranslate, 500);
+								} else {
+									resolve(asciBraille);
+								}
+							}
+						}
+					};
+					
+					tryTranslate();
+				} catch (error) {
+					console.warn(`[convertAsciBrailleToUnicode] Attempt ${attempt} outer exception:`, error);
+					if (attempt < maxAttempts) {
+						setTimeout(attemptTranslate, 500);
+					} else {
+						resolve(asciBraille);
+					}
+				}
+			};
+			
+			attemptTranslate();
+		});
+	}
 	
 	// Track the resolved LaTeX for download
 	let resolvedLatex = $state('');
@@ -151,6 +251,14 @@
 	// comment out to turn of logs
 	// asyncLiblouis.setLogLevel(0);
 
+	// Initialize the Worker with a version check to ensure it's ready
+	let liblouisReady = false;
+	asyncLiblouis.version(function() {
+		liblouisReady = true;
+		console.log('[liblouis] Worker initialized and ready');
+	});
+
+	// Test calls after initialization
 	asyncLiblouis.translateString(
 		'unicode.dis,en-ueb-g2.ctb',
 		'Hi, Mom! You owe me: $3.50.',
